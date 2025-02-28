@@ -66,101 +66,135 @@ export const Home = () => {
     .slice(0, 5);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
-      {/* Banner Section - more compact and consistent with design */}
-      <div className="mb-6">
-        <Card className="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 border-0 overflow-hidden p-0">
-          <div className="relative p-4 flex justify-between items-center">
-            {/* Tennis ball icon */}
-            <div className="absolute -bottom-4 -left-4 opacity-10">
-              <svg width="100" height="100" viewBox="0 0 24 24" className="text-white">
-                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                <path fill="currentColor" d="M12 4c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>
-              </svg>
-            </div>
-            
-            {/* Main content */}
-            <div className="text-white z-10">
-              <h2 className="text-lg md:text-xl font-bold">
-                Зафіксуйте результати гри
-              </h2>
-              <p className="text-sm text-white/80 mt-1">
-                Записуйте матчі та відстежуйте прогрес
-              </p>
-            </div>
-            
-            {/* Button */}
-            <Link to="/new-match">
-              <Button
-                variant="secondary"
-                size="medium"
-                className="bg-white/95 hover:bg-white text-blue-700 hover:text-blue-800 shadow-md border border-blue-200"
-              >
-                <span className="flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
+    <div className="max-w-6xl mx-auto px-4 py-3 sm:py-5">
+      {/* Banner as a full clickable button - responsive for both mobile and desktop */}
+      <div className="mb-3 sm:mb-5">
+        <Link to="/new-match" className="block">
+          <Card className="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 border-0 overflow-hidden p-0 
+                          hover:shadow-lg transition-shadow duration-200 active:bg-blue-700 active:scale-[0.995] transform">
+            <div className="relative py-3 sm:py-4 px-4 sm:px-6 flex justify-between items-center">
+              {/* Tennis ball icon - responsive sizing */}
+              <div className="absolute -bottom-3 -left-3 opacity-10 hidden sm:block">
+                <svg width="100" height="100" viewBox="0 0 24 24" className="text-white">
+                  <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                  <path fill="currentColor" d="M12 4c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/>
+                </svg>
+              </div>
+              
+              {/* Main content - centered on mobile, left-aligned on desktop */}
+              <div className="flex-grow text-white z-10 flex items-center justify-center sm:justify-start">
+                <svg className="w-5 h-5 mr-2 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <h2 className="text-base sm:text-xl font-bold">
                   Записати новий матч
-                </span>
-              </Button>
-            </Link>
-          </div>
-        </Card>
+                </h2>
+                <p className="ml-2 text-white/80 text-sm hidden sm:block">
+                  Фіксуйте результати та відстежуйте прогрес
+                </p>
+              </div>
+              
+              {/* Button-like element on desktop */}
+              <div className="hidden sm:flex items-center bg-white/10 rounded-lg px-3 py-1.5 text-white text-sm font-medium hover:bg-white/20 transition-colors">
+                <span>Створити</span>
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </Card>
+        </Link>
       </div>
 
-      {/* Stats and Recent Matches Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Statistics */}
-        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-4">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-            Загальна статистика
-          </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">
-                Всього матчів:
-              </span>
-              <span className="font-semibold">{recentMatches.length}</span>
+      {/* Stats and Recent Matches - Responsive Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+        {/* Quick Stats - Horizontal cards on mobile, vertical on desktop */}
+        <div className="flex md:flex-col gap-2 md:gap-3">
+          {/* Matches Stat */}
+          <div className="flex-1 bg-white dark:bg-gray-800 shadow-sm rounded-lg p-3 sm:p-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-2 sm:mr-3">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Матчі</div>
+                <div className="font-semibold sm:text-lg">{recentMatches.length}</div>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-300">
-                Всього гравців:
-              </span>
-              <span className="font-semibold">{players.length}</span>
+            <div className="md:hidden text-blue-600 dark:text-blue-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </div>
-            <div className="mt-4">
-              <Link to="/statistics" className="text-blue-600 hover:underline">
-                Докладна статистика →
-              </Link>
+          </div>
+          
+          {/* Players Stat */}
+          <div className="flex-1 bg-white dark:bg-gray-800 shadow-sm rounded-lg p-3 sm:p-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-400 mr-2 sm:mr-3">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Гравці</div>
+                <div className="font-semibold sm:text-lg">{players.length}</div>
+              </div>
             </div>
+            <div className="md:hidden text-green-600 dark:text-green-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+          
+          {/* Stats Link - More prominent on desktop */}
+          <div className="hidden md:block mt-3">
+            <Link to="/statistics" className="text-blue-600 hover:text-blue-700 hover:underline text-sm flex items-center">
+              <span>Повна статистика</span>
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
         </div>
 
         {/* Recent Matches Section - takes 2 columns on desktop */}
         <div className="md:col-span-2">
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+          <div className="flex justify-between items-center mb-2 sm:mb-3">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
               Останні матчі
             </h2>
-            <Link to="/history" className="text-blue-600 hover:underline text-sm">
-              Переглянути всі →
+            <Link to="/history" className="text-blue-600 hover:text-blue-700 hover:underline text-sm flex items-center">
+              <span>Усі матчі</span>
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
           </div>
 
           {recentMatches.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {recentMatches.slice(0, 2).map((match) => (
                 <MatchCard key={match.id} match={match} players={players} />
               ))}
             </div>
           ) : (
-            <Card>
-              <div className="text-center py-4 md:py-6">
-                <p className="text-gray-500 mb-4">
+            <Card className="shadow-sm sm:shadow-md">
+              <div className="text-center py-3 sm:py-8">
+                <p className="text-gray-500 text-sm sm:text-base mb-3 sm:mb-4">
                   Поки що немає зіграних матчів
                 </p>
                 <Link to="/new-match">
-                  <Button variant="primary">Зареєструвати перший матч</Button>
+                  <Button 
+                    variant="primary" 
+                    size="small"
+                    className="sm:text-base sm:px-6 sm:py-2"
+                  >
+                    Зареєструвати матч
+                  </Button>
                 </Link>
               </div>
             </Card>
@@ -168,28 +202,37 @@ export const Home = () => {
         </div>
       </div>
 
-      {/* Top Players Section */}
-      <div className="mt-8">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
-          Топ гравців
-        </h2>
+      {/* Top Players Section - Responsive for Mobile and Desktop */}
+      <div className="mt-6 sm:mt-8">
+        <div className="flex justify-between items-center mb-3 sm:mb-4">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
+            Топ гравців
+          </h2>
+          <Link to="/statistics" className="text-blue-600 hover:text-blue-700 hover:underline text-sm flex items-center">
+            <span>Всі гравці</span>
+            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
 
         {topPlayers.length > 0 ? (
-          <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <>
+            {/* Desktop View - Table */}
+            <div className="hidden sm:block bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="py-3 px-3 md:px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Місце
                     </th>
-                    <th className="py-3 px-3 md:px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Гравець
                     </th>
-                    <th className="py-3 px-3 md:px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Бали
                     </th>
-                    <th className="py-3 px-3 md:px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Матчі
                     </th>
                   </tr>
@@ -200,28 +243,28 @@ export const Home = () => {
                       key={player.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
-                      <td className="py-3 px-3 md:px-6 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                      <td className="py-3 px-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                         {index + 1}
                       </td>
-                      <td className="py-3 px-3 md:px-6 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                      <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                         <Link
                           to={`/player/${player.id}`}
                           className="flex items-center hover:text-blue-600"
                         >
                           <div className="mr-2">
-                            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
                               {player.name.substring(0, 2).toUpperCase()}
                             </div>
                           </div>
-                          <span className="truncate max-w-[150px] sm:max-w-[200px] md:max-w-none">
+                          <span className="truncate max-w-[200px] md:max-w-none">
                             {player.name}
                           </span>
                         </Link>
                       </td>
-                      <td className="py-3 px-3 md:px-6 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                      <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                         {player.totalPoints}
                       </td>
-                      <td className="py-3 px-3 md:px-6 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                      <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                         {player.matchesPlayed}
                       </td>
                     </tr>
@@ -229,7 +272,40 @@ export const Home = () => {
                 </tbody>
               </table>
             </div>
-          </div>
+
+            {/* Mobile View - Cards */}
+            <div className="sm:hidden space-y-3">
+              {topPlayers.map((player, index) => (
+                <div 
+                  key={player.id} 
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center justify-between"
+                >
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 mr-3 flex flex-col items-center">
+                      <div className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-1">#{index + 1}</div>
+                      <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                        {player.name.substring(0, 2).toUpperCase()}
+                      </div>
+                    </div>
+                    <div>
+                      <Link to={`/player/${player.id}`}>
+                        <h3 className="font-medium text-gray-900 dark:text-white text-sm">
+                          {player.name}
+                        </h3>
+                      </Link>
+                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 flex space-x-2">
+                        <span>{player.matchesPlayed} матчів</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                    {player.totalPoints}
+                    <span className="text-xs ml-1 text-gray-500 dark:text-gray-400">очк.</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
           <Card>
             <div className="text-center py-4 md:py-6">

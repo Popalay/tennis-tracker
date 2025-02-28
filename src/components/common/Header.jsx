@@ -55,10 +55,10 @@ export const Header = () => {
           d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     )},
-    { path: "/help", label: "Допомога", icon: (
+    { path: "/help", label: "Про додаток", icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-          d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     )},
   ];
@@ -92,6 +92,21 @@ export const Header = () => {
               </Link>
             </div>
             
+            {/* Mobile top-right actions */}
+            <div className="md:hidden flex items-center space-x-1">
+              <Link 
+                to="/help" 
+                className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                aria-label="Про додаток"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </Link>
+              <ThemeToggle />
+            </div>
+            
             {/* Desktop navigation */}
             <nav className="hidden md:flex items-center space-x-2">
               {navItems.map(item => (
@@ -99,59 +114,44 @@ export const Header = () => {
                   {item.label}
                 </Link>
               ))}
-              <Link to="/help" className="ml-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </Link>
               <ThemeToggle />
             </nav>
           </div>
         </div>
       </header>
 
-      {/* Bottom mobile navigation - more interesting design */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-2 pb-2">
+      {/* Bottom mobile navigation - improved for better accessibility on smaller screens */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-2 pb-safe">
         {/* Curved background with blur effect */}
-        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-lg rounded-2xl h-16 border border-gray-200 dark:border-gray-700 flex items-center justify-around">
-          {navItems.map((item, index) => {
+        <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-lg rounded-t-xl h-18 border-t border-gray-200 dark:border-gray-700 flex items-center justify-around">
+          {/* Only show the main navigation items in bottom bar */}
+          {navItems.slice(0, 4).map((item) => {
             const active = isActive(item.path);
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className="group relative w-full flex flex-col items-center justify-center"
+                className="group relative w-full flex flex-col items-center justify-center py-2"
+                aria-label={item.label}
               >
-                {/* No indicator pill */}
-                
-                {/* Icon with animated container */}
-                <div className={`relative p-1.5 rounded-full transition-all duration-300 ${
+                {/* Icon with animated container - larger touch target */}
+                <div className={`relative p-2 rounded-full transition-all duration-300 ${
                   active 
                     ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white transform scale-110 shadow-md" 
                     : "text-gray-500 dark:text-gray-400 group-hover:bg-gray-100 dark:group-hover:bg-gray-700"
                 }`}>
                   {item.icon}
-                  
-                  {/* No ping effect anymore */}
                 </div>
                 
-                {/* Label */}
-                <span className={`text-xs mt-0.5 transition-colors ${
-                  active ? "font-medium text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
+                {/* Label - improved visibility */}
+                <span className={`text-xs font-medium mt-1 transition-colors ${
+                  active ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
                 }`}>
                   {item.label}
                 </span>
               </Link>
             );
           })}
-          
-          {/* Theme toggle button */}
-          <button className="group relative w-full flex flex-col items-center justify-center">
-            <div className="p-1.5 rounded-full text-gray-500 dark:text-gray-400 group-hover:bg-gray-100 dark:group-hover:bg-gray-700">
-              <ThemeToggle isMobile={true} />
-            </div>
-            <span className="text-xs mt-0.5 text-gray-500 dark:text-gray-400">Тема</span>
-          </button>
         </div>
       </nav>
     </>
