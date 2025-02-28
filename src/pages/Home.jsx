@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { Button } from "../components/common/Button";
 import { Card } from "../components/common/Card";
 import { MatchCard } from "../components/common/MatchCard";
+import { LoadingState } from "../components/common/LoadingState";
+import { EmptyState } from "../components/common/EmptyState";
 import { useAppData } from "../context/AppDataContext";
 
 export const Home = () => {
@@ -42,21 +44,27 @@ export const Home = () => {
   // Відображення завантаження
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
+      <LoadingState 
+        message="Завантаження даних..." 
+        size="large"
+      />
     );
   }
 
   // Відображення помилки
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-red-500 mb-4">{error}</div>
-        <Button onClick={() => window.location.reload()}>
-          Оновити сторінку
-        </Button>
-      </div>
+      <EmptyState
+        title="Помилка завантаження"
+        description={error}
+        icon={
+          <svg className="w-16 h-16 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        }
+        actionText="Оновити сторінку"
+        actionOnClick={() => window.location.reload()}
+      />
     );
   }
 
@@ -182,22 +190,18 @@ export const Home = () => {
               ))}
             </div>
           ) : (
-            <Card className="shadow-sm sm:shadow-md">
-              <div className="text-center py-3 sm:py-8">
-                <p className="text-gray-500 text-sm sm:text-base mb-3 sm:mb-4">
-                  Поки що немає зіграних матчів
-                </p>
-                <Link to="/new-match">
-                  <Button 
-                    variant="primary" 
-                    size="small"
-                    className="sm:text-base sm:px-6 sm:py-2"
-                  >
-                    Зареєструвати матч
-                  </Button>
-                </Link>
-              </div>
-            </Card>
+            <EmptyState
+              title="Немає матчів"
+              description="Поки що немає зіграних матчів"
+              icon={
+                <svg className="w-16 h-16 text-blue-300 dark:text-blue-800 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2zM6 20h2a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2z" />
+                </svg>
+              }
+              actionText="Зареєструвати матч"
+              actionLink="/new-match"
+              className="py-6 sm:py-8"
+            />
           )}
         </div>
       </div>
@@ -248,7 +252,7 @@ export const Home = () => {
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                         <Link
-                          to={`/player/${player.id}`}
+                          to={`/statistics?player=${player.id}`}
                           className="flex items-center hover:text-blue-600"
                         >
                           <div className="mr-2">
@@ -262,10 +266,10 @@ export const Home = () => {
                         </Link>
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                        {player.totalPoints}
+                        {player.totalPoints || 0}
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                        {player.matchesPlayed}
+                        {player.matchesPlayed || 0}
                       </td>
                     </tr>
                   ))}
@@ -288,18 +292,18 @@ export const Home = () => {
                       </div>
                     </div>
                     <div>
-                      <Link to={`/player/${player.id}`}>
+                      <Link to={`/statistics?player=${player.id}`}>
                         <h3 className="font-medium text-gray-900 dark:text-white text-sm">
                           {player.name}
                         </h3>
                       </Link>
                       <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 flex space-x-2">
-                        <span>{player.matchesPlayed} матчів</span>
+                        <span>{player.matchesPlayed || 0} матчів</span>
                       </div>
                     </div>
                   </div>
                   <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                    {player.totalPoints}
+                    {player.totalPoints || 0}
                     <span className="text-xs ml-1 text-gray-500 dark:text-gray-400">очк.</span>
                   </div>
                 </div>
@@ -307,11 +311,17 @@ export const Home = () => {
             </div>
           </>
         ) : (
-          <Card>
-            <div className="text-center py-4 md:py-6">
-              <p className="text-gray-500">Ще немає зареєстрованих гравців</p>
-            </div>
-          </Card>
+          <EmptyState
+            title="Немає гравців"
+            description="Додайте гравців для відображення рейтингу"
+            icon={
+              <svg className="w-16 h-16 text-blue-300 dark:text-blue-800 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            }
+            actionText="Додати гравця"
+            actionLink="/new-match"
+          />
         )}
       </div>
     </div>

@@ -6,6 +6,8 @@ import { PlayerProgressChart } from "../components/charts/PlayerProgressChart";
 import { CombinedProgressChart } from "../components/charts/CombinedProgressChart";
 import { ScoreDistributionChart } from "../components/charts/ScoreDistributionChart";
 import { Button } from "../components/common/Button";
+import { LoadingState } from "../components/common/LoadingState";
+import { EmptyState } from "../components/common/EmptyState";
 import { useAppData } from "../context/AppDataContext";
 
 export const Statistics = () => {
@@ -143,9 +145,10 @@ export const Statistics = () => {
   // Відображення завантаження
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
+      <LoadingState 
+        message="Завантаження статистики..." 
+        size="large"
+      />
     );
   }
 
@@ -156,12 +159,18 @@ export const Statistics = () => {
       </h1>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-          <p>{error}</p>
-          <button className="underline ml-2" onClick={() => setError(null)}>
-            Закрити
-          </button>
-        </div>
+        <EmptyState
+          title="Помилка завантаження"
+          description={error}
+          icon={
+            <svg className="w-16 h-16 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          }
+          actionText="Спробувати знову"
+          actionOnClick={() => window.location.reload()}
+          className="mb-6"
+        />
       )}
 
       {/* Вкладки для перемикання між режимами відображення */}
@@ -688,26 +697,29 @@ export const Statistics = () => {
 
       {/* Для індивідуальної статистики, коли немає обраного гравця */}
       {selectedTab === "individual" && !player && players.length > 0 && (
-        <Card>
-          <div className="text-center py-6">
-            <p className="text-gray-500">
-              Виберіть гравця для перегляду індивідуальної статистики
-            </p>
-          </div>
-        </Card>
+        <EmptyState
+          title="Виберіть гравця"
+          description="Виберіть гравця для перегляду індивідуальної статистики"
+          icon={
+            <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          }
+        />
       )}
 
       {players.length === 0 && (
-        <Card>
-          <div className="text-center py-6">
-            <p className="text-gray-500 mb-4">
-              Немає зареєстрованих гравців для відображення статистики
-            </p>
-            <Link to="/new-match">
-              <Button variant="primary">Додати гравців</Button>
-            </Link>
-          </div>
-        </Card>
+        <EmptyState
+          title="Немає гравців"
+          description="Немає зареєстрованих гравців для відображення статистики"
+          icon={
+            <svg className="w-16 h-16 text-blue-300 dark:text-blue-800 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          }
+          actionText="Додати гравців"
+          actionLink="/new-match"
+        />
       )}
     </div>
   );

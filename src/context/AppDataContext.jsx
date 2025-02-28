@@ -6,222 +6,14 @@ import {
   addDoc,
   query,
   orderBy,
-  limit as firestoreLimit,
+  serverTimestamp,
+  updateDoc,
+  doc,
+  increment,
+  Timestamp
 } from "firebase/firestore";
 import { db } from "../api/firebase";
 import { calculateMatchPoints } from "../utils/scoringSystem";
-
-// Sample data (with Ukrainian and western names)
-const samplePlayers = [
-  {
-    id: "p1",
-    name: "Олександр Зверєв",
-    totalPoints: 1250,
-    matchesPlayed: 15,
-    matchesWon: 9,
-    setsWon: 25,
-    gamesWon: 120,
-  },
-  {
-    id: "p2",
-    name: "Андрій Кравченко",
-    totalPoints: 980,
-    matchesPlayed: 12,
-    matchesWon: 7,
-    setsWon: 19,
-    gamesWon: 95,
-  },
-  {
-    id: "p3",
-    name: "Роджер Федерер",
-    totalPoints: 1560,
-    matchesPlayed: 18,
-    matchesWon: 14,
-    setsWon: 32,
-    gamesWon: 167,
-  },
-  {
-    id: "p4",
-    name: "Рафаель Надаль",
-    totalPoints: 1340,
-    matchesPlayed: 16,
-    matchesWon: 11,
-    setsWon: 28,
-    gamesWon: 145,
-  },
-  {
-    id: "p5",
-    name: "Карлос Алкарас",
-    totalPoints: 890,
-    matchesPlayed: 10,
-    matchesWon: 5,
-    setsWon: 17,
-    gamesWon: 78,
-  },
-  {
-    id: "p6",
-    name: "Новак Джокович",
-    totalPoints: 1420,
-    matchesPlayed: 14,
-    matchesWon: 12,
-    setsWon: 30,
-    gamesWon: 156,
-  },
-];
-
-const sampleMatches = [
-  {
-    id: "m1",
-    format: "1v1",
-    players: ["p1", "p2"],
-    createdAt: new Date(2024, 1, 5, 14, 30).toISOString(),
-    sets: {
-      1: {
-        games: {
-          p1: 6,
-          p2: 4,
-        },
-      },
-      2: {
-        games: {
-          p1: 7,
-          p2: 6,
-        },
-      },
-    },
-    pointsEarned: {
-      winner: "p1",
-      points: {
-        p1: 150,
-        p2: 45,
-      },
-    },
-  },
-  {
-    id: "m2",
-    format: "1v1",
-    players: ["p3", "p4"],
-    createdAt: new Date(2024, 1, 12, 16, 0).toISOString(),
-    sets: {
-      1: {
-        games: {
-          p3: 4,
-          p4: 6,
-        },
-      },
-      2: {
-        games: {
-          p3: 6,
-          p4: 3,
-        },
-      },
-      3: {
-        games: {
-          p3: 7,
-          p4: 5,
-        },
-      },
-    },
-    pointsEarned: {
-      winner: "p3",
-      points: {
-        p3: 180,
-        p4: 60,
-      },
-    },
-  },
-  {
-    id: "m3",
-    format: "2v2",
-    players: ["p1", "p3", "p2", "p4"],
-    teams: [
-      ["p1", "p3"],
-      ["p2", "p4"],
-    ],
-    createdAt: new Date(2024, 1, 18, 10, 15).toISOString(),
-    sets: {
-      1: {
-        games: {
-          "p1-p3": 6,
-          "p2-p4": 3,
-        },
-      },
-      2: {
-        games: {
-          "p1-p3": 6,
-          "p2-p4": 4,
-        },
-      },
-    },
-    pointsEarned: {
-      winner: ["p1", "p3"],
-      points: {
-        "p1-p3": 120,
-        "p2-p4": 40,
-      },
-    },
-  },
-  {
-    id: "m4",
-    format: "1v1",
-    players: ["p5", "p6"],
-    createdAt: new Date(2024, 1, 25, 18, 30).toISOString(),
-    sets: {
-      1: {
-        games: {
-          p5: 3,
-          p6: 6,
-        },
-      },
-      2: {
-        games: {
-          p5: 4,
-          p6: 6,
-        },
-      },
-    },
-    pointsEarned: {
-      winner: "p6",
-      points: {
-        p5: 35,
-        p6: 140,
-      },
-    },
-  },
-  {
-    id: "m5",
-    format: "1v1",
-    players: ["p2", "p5"],
-    createdAt: new Date(2024, 2, 2, 15, 0).toISOString(),
-    sets: {
-      1: {
-        games: {
-          p2: 6,
-          p5: 4,
-        },
-      },
-      2: {
-        games: {
-          p2: 3,
-          p5: 6,
-        },
-      },
-      3: {
-        games: {
-          p2: 6,
-          p5: 3,
-        },
-      },
-    },
-    pointsEarned: {
-      winner: "p2",
-      points: {
-        p2: 160,
-        p5: 50,
-      },
-    },
-  },
-];
 
 // Create context
 const AppDataContext = createContext();
@@ -233,13 +25,13 @@ export const AppDataProvider = ({ children }) => {
   const [players, setPlayers] = useState([]);
   const [matches, setMatches] = useState([]);
   const [error, setError] = useState(null);
-  const [useFirebase, setUseFirebase] = useState(true);
 
   // Load data from Firebase on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
 
         // Attempt to get players from Firebase
         const playersQuery = query(
@@ -263,30 +55,18 @@ export const AppDataProvider = ({ children }) => {
           return {
             id: doc.id,
             ...data,
-            createdAt: data.createdAt?.toDate?.() || data.createdAt, // Convert Firestore timestamp if needed
+            createdAt: data.createdAt instanceof Timestamp 
+              ? data.createdAt.toDate() 
+              : data.createdAt ? new Date(data.createdAt) : new Date(),
           };
         });
 
-        // If Firebase data is empty, use sample data as fallback
-        if (playersData.length === 0 || matchesData.length === 0) {
-          console.log(
-            "Using sample data as fallback because Firebase returned empty data",
-          );
-          setPlayers(samplePlayers);
-          setMatches(sampleMatches);
-          setUseFirebase(false);
-        } else {
-          setPlayers(playersData);
-          setMatches(matchesData);
-        }
-
+        setPlayers(playersData);
+        setMatches(matchesData);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data from Firebase:", error);
-        setError("Failed to connect to database. Using sample data instead.");
-        setPlayers(samplePlayers);
-        setMatches(sampleMatches);
-        setUseFirebase(false);
+        setError("Не вдалося завантажити дані. Будь ласка, перевірте з'єднання та спробуйте пізніше.");
         setLoading(false);
       }
     };
@@ -294,7 +74,54 @@ export const AppDataProvider = ({ children }) => {
     fetchData();
   }, []);
 
-  // API functions - with fallback to sample data
+  // Refresh data from Firebase
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch updated players
+      const playersQuery = query(
+        collection(db, "players"),
+        orderBy("totalPoints", "desc"),
+      );
+      const playersSnapshot = await getDocs(playersQuery);
+      const playersData = playersSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Fetch updated matches
+      const matchesQuery = query(
+        collection(db, "matches"),
+        orderBy("createdAt", "desc"),
+      );
+      const matchesSnapshot = await getDocs(matchesQuery);
+      const matchesData = matchesSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp 
+            ? data.createdAt.toDate() 
+            : data.createdAt ? new Date(data.createdAt) : new Date(),
+        };
+      });
+
+      setPlayers(playersData);
+      setMatches(matchesData);
+      setLoading(false);
+      
+      return { players: playersData, matches: matchesData };
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      setError("Не вдалося оновити дані. Будь ласка, спробуйте пізніше.");
+      setLoading(false);
+      throw error;
+    }
+  };
+
+  // API functions
   const getRecentMatches = (limit = 5) => {
     return matches
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -357,34 +184,29 @@ export const AppDataProvider = ({ children }) => {
       // Add timestamp
       const matchWithTimestamp = {
         ...matchData,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
         pointsEarned: pointsData,
       };
 
-      let newMatch;
-
-      if (useFirebase) {
-        // Save to Firebase
-        const docRef = await addDoc(
-          collection(db, "matches"),
-          matchWithTimestamp,
-        );
-        newMatch = { id: docRef.id, ...matchWithTimestamp };
-
-        // Update player stats in Firebase
-        // This would normally be done here, but for simplicity we'll skip it
-      } else {
-        // Save to local state only
-        newMatch = {
-          ...matchWithTimestamp,
-          id: `m${matches.length + 1}`,
-        };
-        setMatches((prev) => [...prev, newMatch]);
-
-        // Update local player stats
-        updateLocalPlayerStats(matchData, pointsData);
-      }
-
+      // Save to Firebase
+      const docRef = await addDoc(
+        collection(db, "matches"),
+        matchWithTimestamp,
+      );
+      
+      // Update player stats in Firebase
+      await updatePlayerStats(matchData, pointsData);
+      
+      // Get the new match with the ID
+      const newMatch = { 
+        id: docRef.id, 
+        ...matchWithTimestamp,
+        createdAt: new Date() // Use current date for display until refreshed
+      };
+      
+      // Update local state with the new match
+      setMatches(prev => [newMatch, ...prev]);
+      
       return newMatch;
     } catch (error) {
       console.error("Error adding match:", error);
@@ -392,68 +214,91 @@ export const AppDataProvider = ({ children }) => {
     }
   };
 
-  const updateLocalPlayerStats = (matchData, pointsData) => {
-    setPlayers((prevPlayers) => {
-      const updatedPlayers = [...prevPlayers];
-
+  const updatePlayerStats = async (matchData, pointsData) => {
+    try {
       if (matchData.format === "1v1") {
         // Update stats for singles match
         const player1Id = matchData.players[0];
         const player2Id = matchData.players[1];
         const player1Won = pointsData.winner === player1Id;
 
-        const p1Index = updatedPlayers.findIndex((p) => p.id === player1Id);
-        const p2Index = updatedPlayers.findIndex((p) => p.id === player2Id);
+        // Update player 1 stats
+        await updateDoc(doc(db, "players", player1Id), {
+          totalPoints: increment(pointsData.points[player1Id] || 0),
+          matchesPlayed: increment(1),
+          matchesWon: increment(player1Won ? 1 : 0),
+        });
 
-        if (p1Index >= 0) {
-          updatedPlayers[p1Index] = {
-            ...updatedPlayers[p1Index],
-            totalPoints:
-              (updatedPlayers[p1Index].totalPoints || 0) +
-              (pointsData.points[player1Id] || 0),
-            matchesPlayed: (updatedPlayers[p1Index].matchesPlayed || 0) + 1,
-            matchesWon:
-              (updatedPlayers[p1Index].matchesWon || 0) + (player1Won ? 1 : 0),
-          };
-        }
+        // Update player 2 stats
+        await updateDoc(doc(db, "players", player2Id), {
+          totalPoints: increment(pointsData.points[player2Id] || 0),
+          matchesPlayed: increment(1),
+          matchesWon: increment(!player1Won ? 1 : 0),
+        });
 
-        if (p2Index >= 0) {
-          updatedPlayers[p2Index] = {
-            ...updatedPlayers[p2Index],
-            totalPoints:
-              (updatedPlayers[p2Index].totalPoints || 0) +
-              (pointsData.points[player2Id] || 0),
-            matchesPlayed: (updatedPlayers[p2Index].matchesPlayed || 0) + 1,
-            matchesWon:
-              (updatedPlayers[p2Index].matchesWon || 0) + (!player1Won ? 1 : 0),
-          };
-        }
+        // Update local state
+        setPlayers(prevPlayers => {
+          return prevPlayers.map(player => {
+            if (player.id === player1Id) {
+              return {
+                ...player,
+                totalPoints: (player.totalPoints || 0) + (pointsData.points[player1Id] || 0),
+                matchesPlayed: (player.matchesPlayed || 0) + 1,
+                matchesWon: (player.matchesWon || 0) + (player1Won ? 1 : 0),
+              };
+            }
+            if (player.id === player2Id) {
+              return {
+                ...player,
+                totalPoints: (player.totalPoints || 0) + (pointsData.points[player2Id] || 0),
+                matchesPlayed: (player.matchesPlayed || 0) + 1,
+                matchesWon: (player.matchesWon || 0) + (!player1Won ? 1 : 0),
+              };
+            }
+            return player;
+          });
+        });
       } else if (matchData.format === "2v2") {
         // Update stats for doubles match
-        matchData.players.forEach((playerId) => {
-          const index = updatedPlayers.findIndex((p) => p.id === playerId);
-          if (index >= 0) {
-            const playerTeam = matchData.teams.find((team) =>
-              team.includes(playerId),
-            );
-            const teamId = playerTeam.join("-");
-            const isWinner = pointsData.winner.includes(playerId);
+        for (const playerId of matchData.players) {
+          const playerTeam = matchData.teams.find(team => team.includes(playerId));
+          const teamId = playerTeam.join("-");
+          const isWinner = pointsData.winner.includes(playerId);
+          const pointsEarned = (pointsData.points[teamId] || 0) / 2; // Split team points
 
-            updatedPlayers[index] = {
-              ...updatedPlayers[index],
-              totalPoints:
-                (updatedPlayers[index].totalPoints || 0) +
-                (pointsData.points[teamId] || 0) / 2,
-              matchesPlayed: (updatedPlayers[index].matchesPlayed || 0) + 1,
-              matchesWon:
-                (updatedPlayers[index].matchesWon || 0) + (isWinner ? 1 : 0),
-            };
-          }
+          // Update player stats in Firebase
+          await updateDoc(doc(db, "players", playerId), {
+            totalPoints: increment(pointsEarned),
+            matchesPlayed: increment(1),
+            matchesWon: increment(isWinner ? 1 : 0),
+          });
+        }
+
+        // Update local state
+        setPlayers(prevPlayers => {
+          return prevPlayers.map(player => {
+            const playerInMatch = matchData.players.includes(player.id);
+            if (playerInMatch) {
+              const playerTeam = matchData.teams.find(team => team.includes(player.id));
+              const teamId = playerTeam.join("-");
+              const isWinner = pointsData.winner.includes(player.id);
+              const pointsEarned = (pointsData.points[teamId] || 0) / 2;
+
+              return {
+                ...player,
+                totalPoints: (player.totalPoints || 0) + pointsEarned,
+                matchesPlayed: (player.matchesPlayed || 0) + 1,
+                matchesWon: (player.matchesWon || 0) + (isWinner ? 1 : 0),
+              };
+            }
+            return player;
+          });
         });
       }
-
-      return updatedPlayers;
-    });
+    } catch (error) {
+      console.error("Error updating player stats:", error);
+      throw error;
+    }
   };
 
   const addPlayer = async (playerData) => {
@@ -465,23 +310,21 @@ export const AppDataProvider = ({ children }) => {
         matchesWon: 0,
         setsWon: 0,
         gamesWon: 0,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
       };
 
-      let newPlayer;
-
-      // if (useFirebase) {
       // Save to Firebase
       const docRef = await addDoc(collection(db, "players"), newPlayerData);
-      newPlayer = { id: docRef.id, ...newPlayerData };
-      // } else {
-      //   // Save to local state only
-      //   newPlayer = {
-      //     ...newPlayerData,
-      //     id: `p${players.length + 1}`,
-      //   };
-      //   setPlayers((prev) => [...prev, newPlayer]);
-      // }
+      
+      // Get the new player with the ID
+      const newPlayer = { 
+        id: docRef.id, 
+        ...newPlayerData,
+        createdAt: new Date() // Use current date for display until refreshed
+      };
+      
+      // Update local state with the new player
+      setPlayers(prev => [newPlayer, ...prev]);
 
       return newPlayer;
     } catch (error) {
@@ -495,6 +338,9 @@ export const AppDataProvider = ({ children }) => {
       value={{
         loading,
         error,
+        players,
+        matches,
+        refreshData,
         getRecentMatches,
         getAllMatches,
         getMatchById,
