@@ -12,6 +12,64 @@ import {
   increment,
   Timestamp
 } from "firebase/firestore";
+
+// Utility function to sanitize data for Firebase (handle nested arrays)
+const sanitizeForFirebase = (data) => {
+  if (data === null || data === undefined) {
+    return data;
+  }
+  
+  if (Array.isArray(data)) {
+    // Convert arrays to objects with numeric keys
+    const result = {};
+    data.forEach((item, index) => {
+      result[`${index}`] = sanitizeForFirebase(item);
+    });
+    return result;
+  }
+  
+  if (typeof data === 'object') {
+    // Process each property of the object
+    const result = {};
+    Object.keys(data).forEach(key => {
+      result[key] = sanitizeForFirebase(data[key]);
+    });
+    return result;
+  }
+  
+  // Return primitive values as is
+  return data;
+};
+
+// Utility function to restore arrays from Firebase object representation
+const restoreArraysFromFirebase = (obj) => {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (typeof obj === 'object') {
+    // Check if this object represents an array (has only numeric keys in sequence)
+    const keys = Object.keys(obj);
+    const isArray = keys.length > 0 && 
+                    keys.every((key, index) => key === index.toString());
+    
+    if (isArray) {
+      // Convert back to an array
+      return keys.map(key => restoreArraysFromFirebase(obj[key]));
+    }
+    
+    // Process each property of regular objects
+    const result = {};
+    keys.forEach(key => {
+      result[key] = restoreArraysFromFirebase(obj[key]);
+    });
+    return result;
+  }
+  
+  // Return primitive values as is
+  return obj;
+};
+
 import { db } from "../api/firebase";
 import { calculateMatchPoints } from "../utils/scoringSystem";
 
@@ -52,9 +110,22 @@ export const AppDataProvider = ({ children }) => {
         const matchesSnapshot = await getDocs(matchesQuery);
         const matchesData = matchesSnapshot.docs.map((doc) => {
           const data = doc.data();
+          
+          // Restore arrays from Firebase object representation
+          const processedData = restoreArraysFromFirebase(data);
+          
+          // Convert legacy format (if needed)
+          if (processedData.format === "2v2" && processedData.teamsMap && !processedData.teams) {
+            processedData.teams = [
+              processedData.teamsMap.team1 || [],
+              processedData.teamsMap.team2 || []
+            ];
+            delete processedData.teamsMap;
+          }
+          
           return {
             id: doc.id,
-            ...data,
+            ...processedData,
             createdAt: data.createdAt instanceof Timestamp 
               ? data.createdAt.toDate() 
               : data.createdAt ? new Date(data.createdAt) : new Date(),
@@ -99,9 +170,22 @@ export const AppDataProvider = ({ children }) => {
       const matchesSnapshot = await getDocs(matchesQuery);
       const matchesData = matchesSnapshot.docs.map((doc) => {
         const data = doc.data();
+        
+        // Restore arrays from Firebase object representation
+        const processedData = restoreArraysFromFirebase(data);
+        
+        // Convert legacy format (if needed)
+        if (processedData.format === "2v2" && processedData.teamsMap && !processedData.teams) {
+          processedData.teams = [
+            processedData.teamsMap.team1 || [],
+            processedData.teamsMap.team2 || []
+          ];
+          delete processedData.teamsMap;
+        }
+        
         return {
           id: doc.id,
-          ...data,
+          ...processedData,
           createdAt: data.createdAt instanceof Timestamp 
             ? data.createdAt.toDate() 
             : data.createdAt ? new Date(data.createdAt) : new Date(),
@@ -181,11 +265,27 @@ export const AppDataProvider = ({ children }) => {
       // Calculate points
       const pointsData = calculateMatchPoints(matchData);
 
-      // Add timestamp
-      const matchWithTimestamp = {
-        ...matchData,
+      // Create a completely Firebase-safe version of matchData
+      // This will convert all nested arrays to objects with numeric keys
+      const rawData = JSON.parse(JSON.stringify(matchData));
+      
+      // Process the points data similarly
+      const rawPointsData = JSON.parse(JSON.stringify(pointsData));
+      
+      // Completely sanitize the data for Firebase
+      const firebaseSafeData = sanitizeForFirebase(rawData);
+      const firebaseSafePointsData = sanitizeForFirebase(rawPointsData);
+      
+      // Create a timestamp object
+      const timestampData = {
         createdAt: serverTimestamp(),
-        pointsEarned: pointsData,
+        pointsEarned: firebaseSafePointsData
+      };
+      
+      // Combine everything into a Firebase-safe object
+      const matchWithTimestamp = {
+        ...firebaseSafeData,
+        ...timestampData
       };
 
       // Save to Firebase
@@ -197,11 +297,12 @@ export const AppDataProvider = ({ children }) => {
       // Update player stats in Firebase
       await updatePlayerStats(matchData, pointsData);
       
-      // Get the new match with the ID
+      // Get the new match with the ID and restore the original structure for the app state
       const newMatch = { 
         id: docRef.id, 
-        ...matchWithTimestamp,
-        createdAt: new Date() // Use current date for display until refreshed
+        ...matchData,
+        createdAt: new Date(), // Use current date for display until refreshed
+        pointsEarned: pointsData
       };
       
       // Update local state with the new match
@@ -259,11 +360,14 @@ export const AppDataProvider = ({ children }) => {
           });
         });
       } else if (matchData.format === "2v2") {
+        // Get the teams from either the teams array or teamsMap structure
+        const teams = matchData.teams || (matchData.teamsMap ? [matchData.teamsMap.team1 || [], matchData.teamsMap.team2 || []] : [[], []]);
+        
         // Update stats for doubles match
         for (const playerId of matchData.players) {
-          const playerTeam = matchData.teams.find(team => team.includes(playerId));
+          const playerTeam = teams.find(team => team.includes(playerId));
           const teamId = playerTeam.join("-");
-          const isWinner = pointsData.winner.includes(playerId);
+          const isWinner = pointsData.winner === teamId; // Compare with teamId string
           const pointsEarned = (pointsData.points[teamId] || 0) / 2; // Split team points
 
           // Update player stats in Firebase
@@ -279,9 +383,9 @@ export const AppDataProvider = ({ children }) => {
           return prevPlayers.map(player => {
             const playerInMatch = matchData.players.includes(player.id);
             if (playerInMatch) {
-              const playerTeam = matchData.teams.find(team => team.includes(player.id));
+              const playerTeam = teams.find(team => team.includes(player.id));
               const teamId = playerTeam.join("-");
-              const isWinner = pointsData.winner.includes(player.id);
+              const isWinner = pointsData.winner === teamId; // Compare with teamId string
               const pointsEarned = (pointsData.points[teamId] || 0) / 2;
 
               return {

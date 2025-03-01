@@ -89,10 +89,12 @@ export const calculateMatchPoints = (matchData) => {
     
     // Визначення переможця матчу
     if (team1Sets > team2Sets) {
-      result.winner = matchData.teams[0];
+      // Use team ID string instead of array to avoid nested arrays in Firestore
+      result.winner = team1Id;
       result.points[team1Id] += POINTS.MATCH_WIN;
     } else if (team2Sets > team1Sets) {
-      result.winner = matchData.teams[1];
+      // Use team ID string instead of array to avoid nested arrays in Firestore
+      result.winner = team2Id;
       result.points[team2Id] += POINTS.MATCH_WIN;
     } else {
       // Нічия не враховується в тенісі, але на всяк випадок
@@ -155,9 +157,8 @@ export const calculatePlayerStats = (matches, playerId) => {
       const teamId = playerTeam.join('-');
       
       // Перевірка, чи команда гравця виграла матч
-      if (match.pointsEarned.winner && 
-          Array.isArray(match.pointsEarned.winner) && 
-          match.pointsEarned.winner.includes(playerId)) {
+      // Now winner is stored as a team ID string (not an array of player IDs)
+      if (match.pointsEarned.winner === teamId) {
         stats.matchesWon++;
       }
       
